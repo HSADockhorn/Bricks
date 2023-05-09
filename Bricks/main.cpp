@@ -37,12 +37,6 @@ T3DPentominoSet*	theSet = nullptr;
 
 void fit_piece( int level, int lx, int ly, int lz )
 {
-	// debug display
-	
-	
-
-	
-	
 	// primality check
 	
 	//	case 1: mirroring in plane x=XMID
