@@ -30,6 +30,10 @@ bool pieceUsed[12];
 
 char Letters[12] = { 'F', 'I', 'L', 'N', 'P', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
 
+int pieceUsedOnLevel[12];
+int manifestationUsedOnLevel[12];
+int manifestationGroupUsedForPiece[12];
+
 T3DPentominoSet*	theSet = nullptr;
 
 
@@ -178,29 +182,39 @@ void fit_piece( int level, int lx, int ly, int lz )
 	// level check
 	if ( level == 12 )
 	{
+		// increment overall solution counter
 		solutionCount++;
 
-		if (solutionCount%1==0)
+		// print parts list
+		for ( int p=0; p<12; p++ )
 		{
-			std::cout << "Solution " << solutionCount <<":" << "\n\n";
-			
-			// handling a solution
-			for ( int x=0; x<XSIZE; x++ )
-			{
-				for ( int y=0; y<YSIZE; y++ )
-				{
-					for ( int z=0; z<ZSIZE; z++ )
-					{
-						int a = Box[x][y][z];
-						std::cout << ( (a==-1) ? '-' : Letters[a] );
-					}
-					std::cout << ' ';
-				}
-				std::cout << '\n';
-			}
-			std::cout << "=======================================\n" << std::endl;
+			std::cout << Letters[p] << manifestationGroupUsedForPiece[p];
 		}
+		std::cout << ';';
 
+		// print solution in coded form
+		for ( int l=0; l<12; l++)
+		{
+			std::cout << Letters[pieceUsedOnLevel[l]] << manifestationUsedOnLevel[l];
+ 		}
+		std::cout << ';';
+
+		// print solution in readable format
+		for ( int x=0; x<3; x++ )
+		{
+			for ( int y=0; y<4; y++ )
+			{
+				for ( int z=0; z<5; z++ )
+				{
+					std::cout << Letters[Box[x][y][z]];
+				}
+				if (y<3) std::cout << ' ';
+			}
+			if (x<2) std::cout << '|';
+		}
+		std::cout << std::endl;
+
+		// done here
 		return;
 	}
 	
@@ -219,14 +233,13 @@ void fit_piece( int level, int lx, int ly, int lz )
 		if ( pieceUsed[p] ) continue;
 		
 		// Mark piece 'p' as used and get a reference to its definition
+		pieceUsedOnLevel[level] = p;
 		Box[lx][ly][lz] = p;
 		pieceUsed[p] = true;
 		const T3DPiece* thePiece = theSet->getPiece(p);
 		
-		// determine manifestation count for the piece
+		// loop over manifestations
 		int M = thePiece->getManifestationCount();
-		
-		// loop over all manifestations of the piece
 		for ( int m=0; m<M; m++ )
 		{
 			// get reference to the manifestation
@@ -259,8 +272,10 @@ void fit_piece( int level, int lx, int ly, int lz )
 			if ( !isFree ) continue;
 	
 			// at this point we are sure that the manifestation meets all the requirements
-			// so put it into the box
-			
+			// so put it into the box and update administration
+			manifestationUsedOnLevel[level] = m;
+			manifestationGroupUsedForPiece[p] = m/thePiece->getGroupSize();
+
 			for ( int pt=0; pt<4; pt++ )
 			{
 				const T3DGridPoint& thePoint = theManifestation->getPoint( pt );
@@ -294,18 +309,12 @@ void fit_piece( int level, int lx, int ly, int lz )
 
 
 
-
 int main(int argc, const char * argv[])
 {
+	// create a set of 3D pentominoes
 	theSet = new T3DPentominoSet();
 	
-	for ( int pi=0; pi<12; pi++ )
-	{
-		const T3DPiece* p = theSet->getPiece( pi );
-		std::cout << "Piece " << pi << " has " << p->getManifestationCount() << " manifestations in " << p->getGroupCount() << " groups of " << p->getGroupSize() << "." << std::endl;
-	}
-	
-	
+	// clear the box
 	for ( int x=0; x<XSIZE; x++ )
 	{
 		for ( int y=0; y<YSIZE; y++ )
@@ -316,17 +325,23 @@ int main(int argc, const char * argv[])
 			}
 		}
 	}
+	
+	// no solutions found yet
 	solutionCount = 0;
+
+	// no pieces in use yet
 	for ( int p=0; p<12; p++ ) pieceUsed[p] = false;
 	
 	fit_piece (0, 0, 0, 0 );
 	
-	std::cout << solutionCount<<  " Solutions were found.\n";
+	// announce overall result
+	std::cout << "A grand total of " << solutionCount<<  " solutions was found." << std::endl;
 	
+	// clean up the set of 3D pentominoes
 	delete theSet;
 	theSet = nullptr;
 	
-	// insert code here...
+	// all well that ends well
 	return 0;
 }
 
